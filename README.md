@@ -10,379 +10,648 @@ A comprehensive web application for managing society maintenance complaints, not
 - **Admin:** admin@society.com / admin123
 - **Resident:** rajesh@example.com / resident123
 
----
+## 📋 Features
 
-## Table of Contents
+### Complaint Management System
+- Raise complaints with photo attachments (Cloudinary integration)
+- Priority-based categorization (Low, Medium, High)
+- Status tracking (Open, In Progress, Resolved)
+- Complete status history timeline with admin notes
+- Automatic overdue detection and alerts
+- Email notifications on status updates
 
-1. [Architecture Overview](#architecture-overview)  
-2. [Prerequisites](#prerequisites)  
-3. [Setup Steps](#setup-steps)  
-4. [Environment Variables](#environment-variables)  
-5. [Database Schema](#database-schema)  
-6. [API Endpoint Reference](#api-endpoint-reference)  
-7. [Deployment](#deployment)  
+### Admin Dashboard
+- Real-time analytics and performance metrics
+- Weekly complaint trends (last 6 weeks)
+- Priority distribution visualization
+- Recent activity feed (last 10 status changes)
+- Category-wise breakdown with percentages
+- Resolution rate and average response time tracking
 
----
+### Notice Board
+- Post society announcements with cork board aesthetic
+- Mark notices as important (highlighted with red pin)
+- Email notifications for important notices to all residents
+- Professional design without emojis
 
-## Architecture Overview
+### User Management
+- Role-based access control (Admin/Resident)
+- JWT-based authentication with secure tokens
+- bcrypt password hashing (10 salt rounds)
 
-```
-society-maintenance-tracker/
-├── backend/       Node.js + Express REST API (port 4000)
-├── frontend/      React + Vite SPA (port 5173)
-├── .env.example   Master env reference (no real secrets)
-└── README.md
-```
+## 🛠️ Tech Stack
 
-**Key design decisions:**
-- Overdue is **never stored** — computed at query time via `NOW() - created_at > interval`
-- Every status change writes a row to `complaint_status_history` — this is the audit trail
-- Once status = `Resolved`, the API returns **403** on any further status update
-- Important notices sort first in the notice board (`ORDER BY is_important DESC, created_at DESC`)
-- Email is a **synchronous side-effect** of two events only: status change and important notice creation
+- **Frontend:** Next.js 16.3.2 (App Router), React 19
+- **Backend:** Next.js API Routes (serverless functions)
+- **Database:** PostgreSQL (Neon serverless)
+- **ORM:** Prisma 5.22.0
+- **Authentication:** JWT with bcryptjs
+- **File Upload:** Cloudinary
+- **Email Service:** Resend API
+- **Styling:** Custom CSS with light/dark theme support
 
----
+## 📦 Installation & Setup
 
-## Prerequisites
+### Prerequisites
 
-- Node.js ≥ 18
-- PostgreSQL (local instance, or a hosted service like Render's managed Postgres)
-- A [Cloudinary](https://cloudinary.com) account (free tier)
-- A [Resend](https://resend.com) account (free tier: 100 emails/day)
+- Node.js 18+ and npm
+- PostgreSQL database (Neon account recommended)
+- Cloudinary account (free tier)
+- Resend account (free tier: 3000 emails/month)
 
----
-
-## Setup Steps
-
-### 1. Clone the repository
-
-```bash
-git clone <repo-url>
-cd society-maintenance-tracker
-```
-
-### 2. Configure environment variables
-
-**Backend:**
-```bash
-cp .env.example backend/.env
-# Edit backend/.env with your real values
-```
-
-**Frontend:**
-```bash
-cp .env.example frontend/.env
-# Only VITE_API_BASE_URL is needed for the frontend
-# In local dev with Vite proxy, this can be left empty
-```
-
-### 3. Install backend dependencies
+### Step 1: Clone the Repository
 
 ```bash
-cd backend
+git clone https://github.com/coderashhar/SocietyMaintainanceTracker_UnthinkableAssessment.git
+cd SocietyMaintainanceTracker_UnthinkableAssessment/nextjs-app
+```
+
+### Step 2: Install Dependencies
+
+```bash
 npm install
 ```
 
-### 4. Set up the database
+### Step 3: Environment Configuration
 
-```bash
-# Run migrations (creates all tables)
-npx prisma migrate dev --name init
-
-# Generate Prisma client
-npx prisma generate
-```
-
-### 5. Create an admin user
-
-After running migrations, create an admin user directly in the database:
-
-```bash
-npx prisma studio
-```
-
-Or run a quick seed script:
-
-```bash
-# In backend/, create a one-off seed:
-node -e "
-import('dotenv/config').then(async () => {
-  const { PrismaClient } = await import('@prisma/client');
-  const bcrypt = await import('bcryptjs');
-  const prisma = new PrismaClient();
-  const hash = await bcrypt.default.hash('AdminPass123', 12);
-  await prisma.user.create({ data: { name: 'Admin', email: 'admin@society.com', passwordHash: hash, role: 'admin', apartmentNo: 'OFFICE' } });
-  console.log('Admin created');
-  await prisma.\$disconnect();
-});
-"
-```
-
-### 6. Start the backend
-
-```bash
-cd backend
-npm run dev
-# API running at http://localhost:4000
-```
-
-### 7. Install frontend dependencies
-
-```bash
-cd ../frontend
-npm install
-```
-
-### 8. Start the frontend
-
-```bash
-npm run dev
-# App running at http://localhost:5173
-```
-
-The Vite dev server proxies `/api/*` requests to `http://localhost:4000` automatically.
-
----
-
-## Environment Variables
-
-> ⚠ **Never commit your `.env` file.** Only `.env.example` should be in version control.
-
-All variables are documented in [`.env.example`](./.env.example).
-
-### Critical variables explained:
-
-| Variable | Required | Description |
-|---|---|---|
-| `DATABASE_URL` | ✅ | PostgreSQL connection string |
-| `JWT_SECRET` | ✅ | Random string for JWT signing. Generate: `openssl rand -base64 64` |
-| `JWT_EXPIRES_IN` | ✅ | Token expiry e.g. `7d`, `24h` |
-| `CLOUDINARY_CLOUD_NAME` | ✅ | From your Cloudinary dashboard |
-| `CLOUDINARY_API_KEY` | ✅ | From your Cloudinary dashboard |
-| `CLOUDINARY_API_SECRET` | ✅ | From your Cloudinary dashboard |
-| `RESEND_API_KEY` | ✅ | From [resend.com](https://resend.com) — starts with `re_` |
-| `EMAIL_FROM` | ✅ | Verified sender email in Resend. Use `onboarding@resend.dev` for testing |
-| `OVERDUE_THRESHOLD_DAYS` | ⚙️ | **Configurable overdue threshold** — see below |
-| `PORT` | optional | Backend port (default: 4000) |
-| `FRONTEND_URL` | optional | For CORS (default: `http://localhost:5173`) |
-
-### OVERDUE_THRESHOLD_DAYS (Grading Criterion)
-
-This variable controls **how many days** an unresolved complaint must be open before it is considered **overdue**.
+Create a `.env.local` file in the `nextjs-app` directory (see `.env.example` for reference):
 
 ```env
-# Default: 7 days
+# Database (Neon PostgreSQL)
+# Get from: https://neon.tech → Create Project → Connection Details
+DATABASE_URL="postgresql://user:password@ep-xxx.aws.neon.tech:5432/dbname?sslmode=require"
+DIRECT_URL="postgresql://user:password@ep-xxx.aws.neon.tech:5432/dbname?sslmode=require"
+
+# JWT Authentication
+# Generate: openssl rand -base64 64
+JWT_SECRET="your-super-secret-jwt-key-min-32-chars-change-in-production"
+JWT_EXPIRES_IN="7d"
+
+# Cloudinary (Image Upload)
+# Get from: https://cloudinary.com → Dashboard
+CLOUDINARY_CLOUD_NAME="your-cloud-name"
+CLOUDINARY_API_KEY="123456789012345"
+CLOUDINARY_API_SECRET="your-api-secret"
+
+# Resend (Email Service)
+# Get from: https://resend.com → API Keys
+RESEND_API_KEY="re_xxxxxxxxxxxxxxxxxx"
+EMAIL_FROM="noreply@yourdomain.com"
+
+# Overdue Threshold (configurable)
 OVERDUE_THRESHOLD_DAYS=7
 ```
 
-**To change the threshold:**
+### Step 4: Database Setup
 
-1. Open `backend/.env`
-2. Set `OVERDUE_THRESHOLD_DAYS=<number>` (any positive integer)
-3. Restart the backend server
+```bash
+# Generate Prisma Client
+npx prisma generate
 
-**Effect:**
-- Overdue complaints appear **pinned to the top** of the admin complaint list
-- The admin dashboard stat card shows the overdue count
-- The calculation is performed **entirely at query time** using PostgreSQL's `INTERVAL`:
-  ```sql
-  WHERE status != 'Resolved' AND NOW() - created_at > INTERVAL '<N> days'
-  ```
-- Changing this value does **not** require a database migration — it takes effect immediately on restart.
+# Run database migrations
+npx prisma migrate deploy
 
-### Resend Setup
-
-1. Sign up at [resend.com](https://resend.com)
-2. Create an API key under **API Keys**
-3. Set `RESEND_API_KEY=re_...` in your `.env`
-4. Verify a sending domain under **Domains** (for production)
-5. For quick testing, use `EMAIL_FROM=onboarding@resend.dev` (Resend's sandbox address — can only send to your account email)
-
----
-
-## Database Schema
-
-### `users`
-| Column | Type | Notes |
-|---|---|---|
-| id | String (cuid) | Primary key |
-| name | String | |
-| email | String | Unique |
-| password_hash | String | bcrypt, cost factor 12 |
-| role | Enum | `resident` or `admin` |
-| apartment_no | String | |
-| created_at | DateTime | |
-
-### `complaints`
-| Column | Type | Notes |
-|---|---|---|
-| id | String (cuid) | Primary key |
-| resident_id | String | FK → users.id |
-| category | String | Plumbing, Electrical, Cleaning, Security, Elevator, Parking, Noise, Other |
-| description | String | |
-| photo_url | String? | Optional Cloudinary URL |
-| priority | Enum | `Low`, `Medium`, `High` |
-| status | Enum | `Open`, `InProgress`, `Resolved` |
-| created_at | DateTime | |
-| resolved_at | DateTime? | Set when status → Resolved |
-
-> ℹ `overdue` is **not a stored column** — it is computed at query time.
-
-### `complaint_status_history`
-| Column | Type | Notes |
-|---|---|---|
-| id | String (cuid) | Primary key |
-| complaint_id | String | FK → complaints.id (CASCADE delete) |
-| from_status | Enum? | Null for the initial creation entry |
-| to_status | Enum | The new status |
-| actor_id | String | FK → users.id (who made the change) |
-| note | String? | Optional admin note |
-| changed_at | DateTime | |
-
-> ⚠ **Never update this table in place.** Every status transition is an **insert**. This table is the source of truth for the audit trail.
-
-### `notices`
-| Column | Type | Notes |
-|---|---|---|
-| id | String (cuid) | Primary key |
-| title | String | |
-| body | String | |
-| is_important | Boolean | Important notices sort first |
-| created_at | DateTime | |
-| created_by | String | FK → users.id |
-
----
-
-## API Endpoint Reference
-
-Base URL: `http://localhost:4000/api`
-
-All protected endpoints require `Authorization: Bearer <token>` header.
-
-### Auth
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| `POST` | `/auth/register` | Public | Register a new resident |
-| `POST` | `/auth/login` | Public | Login, returns JWT |
-| `GET` | `/auth/me` | Any | Get current user profile |
-
-**Register body:**
-```json
-{ "name": "Rahul Sharma", "email": "rahul@example.com", "password": "Secure123", "apartmentNo": "A-101" }
+# Seed database with sample data (optional but recommended)
+npm run seed
 ```
 
-**Login body:**
-```json
-{ "email": "rahul@example.com", "password": "Secure123" }
+The seed script creates:
+- 1 Admin user (admin@society.com / admin123)
+- 5 Resident users (password: resident123)
+- 12 Complaints with images
+- 6 Notices
+- Status history entries
+
+### Step 5: Run Development Server
+
+```bash
+npm run dev
 ```
 
----
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### Complaints
+### Step 6: Build for Production
 
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| `POST` | `/complaints` | Resident | Raise complaint (multipart/form-data for photo) |
-| `GET` | `/complaints` | Resident | List own complaints |
-| `GET` | `/complaints/:id` | Resident/Admin | Get complaint detail + full history |
-| `GET` | `/complaints/admin/all` | Admin | All complaints with filters + overdue pinned |
-| `PATCH` | `/complaints/:id/priority` | Admin | Update priority |
-| `PATCH` | `/complaints/:id/status` | Admin | Update status (writes history, sends email) |
-
-**Raise complaint (multipart/form-data):**
-```
-category=Plumbing&description=Leak under sink&priority=High&photo=<file>
+```bash
+npm run build
+npm start
 ```
 
-**Admin all complaints query params:**
+## 📊 Database Schema
+
+```prisma
+// User model with role-based access
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(resident)  // resident | admin
+  apartmentNo  String   @map("apartment_no")
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  complaints        Complaint[]
+  statusChanges     ComplaintStatusHistory[]
+  notices           Notice[]
+}
+
+// Complaint with priority and status tracking
+model Complaint {
+  id          String    @id @default(cuid())
+  residentId  String    @map("resident_id")
+  category    String    // Plumbing, Electrical, Cleaning, Security, etc.
+  description String
+  photoUrl    String?   @map("photo_url")
+  priority    Priority  @default(Low)   // Low | Medium | High
+  status      Status    @default(Open)  // Open | InProgress | Resolved
+  createdAt   DateTime  @default(now()) @map("created_at")
+  resolvedAt  DateTime? @map("resolved_at")
+  
+  resident User
+  history  ComplaintStatusHistory[]
+}
+
+// Complete audit trail for status changes
+model ComplaintStatusHistory {
+  id          String   @id @default(cuid())
+  complaintId String   @map("complaint_id")
+  fromStatus  Status?  @map("from_status")
+  toStatus    Status   @map("to_status")
+  actorId     String   @map("actor_id")
+  note        String?
+  changedAt   DateTime @default(now()) @map("changed_at")
+  
+  complaint Complaint @relation(fields: [complaintId], references: [id], onDelete: Cascade)
+  actor     User      @relation(fields: [actorId], references: [id])
+}
+
+// Notice board for society announcements
+model Notice {
+  id          String   @id @default(cuid())
+  title       String
+  body        String
+  isImportant Boolean  @default(false) @map("is_important")
+  createdAt   DateTime @default(now()) @map("created_at")
+  createdBy   String   @map("created_by")
+  
+  author User @relation(fields: [createdBy], references: [id])
+}
 ```
-?category=Plumbing&status=Open&dateFrom=2024-01-01&dateTo=2024-12-31
+
+**Note:** Overdue status is **computed at query time**, not stored. A complaint is overdue if:
+```sql
+status != 'Resolved' AND NOW() - created_at > INTERVAL '7 days'
 ```
 
-**Update status body:**
-```json
-{ "status": "InProgress", "note": "Plumber assigned, will visit tomorrow" }
-```
+## 🔌 API Documentation
 
-> ⚠ Returns **403** if current status is already `Resolved`.
+### Authentication Endpoints
 
-**Update priority body:**
-```json
-{ "priority": "High" }
-```
+#### POST `/api/auth/register`
+Register a new user (defaults to resident role).
 
----
-
-### Notices
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| `GET` | `/notices` | Any (auth) | List all notices (important first) |
-| `GET` | `/notices/:id` | Any (auth) | Get notice by ID |
-| `POST` | `/notices` | Admin | Create notice; emails all residents if important |
-
-**Create notice body:**
-```json
-{ "title": "Water Cut Tomorrow", "body": "Water supply will be cut from 10AM to 2PM", "isImportant": true }
-```
-
----
-
-### Dashboard
-
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| `GET` | `/dashboard` | Admin | Aggregated stats: by-status, by-category, overdue count |
-
-**Response shape:**
+**Request:**
 ```json
 {
-  "totalComplaints": 42,
-  "totalResidents": 18,
-  "byStatus": { "Open": 10, "InProgress": 8, "Resolved": 24 },
-  "byCategory": [{ "category": "Plumbing", "count": 12 }, ...],
-  "overdueCount": 3,
-  "overdueThresholdDays": 7
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "securePassword123",
+  "apartmentNo": "A-101"
+}
+```
+
+**Response:**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "clxxx...",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "role": "resident",
+    "apartmentNo": "A-101"
+  }
+}
+```
+
+#### POST `/api/auth/login`
+Login with email and password.
+
+**Request:**
+```json
+{
+  "email": "john@example.com",
+  "password": "securePassword123"
+}
+```
+
+#### GET `/api/auth/me`
+Get current user details (requires authentication).
+
+**Headers:** `Authorization: Bearer <token>`
+
+---
+
+### Complaint Endpoints
+
+#### GET `/api/complaints`
+Get all complaints for the logged-in resident.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "clxxx...",
+      "category": "Plumbing",
+      "description": "Leaking tap in bathroom",
+      "priority": "Medium",
+      "status": "Open",
+      "photoUrl": "https://res.cloudinary.com/...",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "isOverdue": false,
+      "resident": {
+        "name": "John Doe",
+        "apartmentNo": "A-101"
+      }
+    }
+  ]
+}
+```
+
+#### POST `/api/complaints`
+Create a new complaint.
+
+**Headers:** `Authorization: Bearer <token>`
+
+**Request:**
+```json
+{
+  "category": "Plumbing",
+  "description": "Leaking tap in bathroom needs urgent repair",
+  "photoUrl": "https://res.cloudinary.com/...",
+  "priority": "Medium"
+}
+```
+
+#### GET `/api/complaints/:id`
+Get complaint details with complete status history.
+
+**Response includes:**
+- Complaint details
+- Resident information
+- Complete status history timeline
+- Admin notes for each status change
+
+#### PATCH `/api/complaints/:id/status`
+Update complaint status (admin only).
+
+**Request:**
+```json
+{
+  "status": "InProgress",
+  "note": "Plumber assigned. Will visit tomorrow at 10 AM."
+}
+```
+
+**Note:** Returns 403 if complaint is already resolved (immutable).
+
+#### PATCH `/api/complaints/:id/priority`
+Update complaint priority (admin only).
+
+**Request:**
+```json
+{
+  "priority": "High"
 }
 ```
 
 ---
 
-### Health
+### Admin Endpoints
 
-| Method | Route | Auth | Description |
-|---|---|---|---|
-| `GET` | `/health` | Public | Server liveness check |
+#### GET `/api/admin/complaints`
+Get all complaints with filtering (admin only).
+
+**Query Parameters:**
+- `category` - Filter by category
+- `status` - Filter by status
+- `dateFrom` - Filter from date (YYYY-MM-DD)
+- `dateTo` - Filter to date (YYYY-MM-DD)
+
+**Example:**
+```
+GET /api/admin/complaints?category=Plumbing&status=Open&dateFrom=2024-01-01
+```
+
+#### GET `/api/admin/dashboard`
+Get dashboard statistics.
+
+**Response:**
+```json
+{
+  "totalComplaints": 50,
+  "totalResidents": 25,
+  "byStatus": {
+    "Open": 10,
+    "InProgress": 15,
+    "Resolved": 25
+  },
+  "byCategory": [
+    { "category": "Plumbing", "count": 20 },
+    { "category": "Electrical", "count": 15 }
+  ],
+  "overdueCount": 5,
+  "overdueThresholdDays": 7
+}
+```
+
+#### GET `/api/admin/dashboard/trends`
+Get weekly trends and analytics.
+
+**Response:**
+```json
+{
+  "weeklyTrend": [
+    { "label": "W1", "value": 8, "resolved": 5 },
+    { "label": "W2", "value": 12, "resolved": 8 }
+  ],
+  "avgResolutionDays": 3,
+  "avgResponseHours": 4,
+  "resolutionRate": 78,
+  "priorityData": [
+    { "label": "High", "value": 5, "color": "#EF4444" },
+    { "label": "Medium", "value": 8, "color": "#F59E0B" },
+    { "label": "Low", "value": 3, "color": "#10B981" }
+  ]
+}
+```
+
+#### GET `/api/admin/dashboard/activity`
+Get recent status changes (last 10).
+
+**Response:**
+```json
+{
+  "activities": [
+    {
+      "fromStatus": "Open",
+      "toStatus": "InProgress",
+      "note": "Plumber assigned",
+      "changedAt": "2024-01-15T14:30:00.000Z",
+      "actor": { "name": "Admin User" },
+      "complaint": { "category": "Plumbing" }
+    }
+  ]
+}
+```
 
 ---
 
-## Deployment
+### Notice Endpoints
 
-### Render (Backend) + Vercel (Frontend)
+#### GET `/api/notices`
+Get all notices (important notices first).
 
-**Backend on Render:**
-1. Create a new **Web Service** pointing to the `backend/` directory
-2. Build command: `npm install && npx prisma generate && npx prisma migrate deploy`
-3. Start command: `npm start`
-4. Add all environment variables from `.env.example` in Render's dashboard
-5. Create a **PostgreSQL** database service on Render and copy its `DATABASE_URL`
+**Response:**
+```json
+{
+  "data": [
+    {
+      "id": "clxxx...",
+      "title": "Water Supply Interruption",
+      "body": "Water supply will be interrupted this Sunday...",
+      "isImportant": true,
+      "createdAt": "2024-01-15T09:00:00.000Z",
+      "author": { "name": "Admin User" }
+    }
+  ]
+}
+```
 
-**Frontend on Vercel:**
-1. Create a new project pointing to the `frontend/` directory
-2. Set `VITE_API_BASE_URL=https://your-backend.onrender.com/api`
-3. Deploy — Vercel will auto-detect Vite
+#### POST `/api/notices`
+Create a new notice (admin only).
 
-### Single Render Full-Stack Deploy
+**Request:**
+```json
+{
+  "title": "Water Supply Interruption - This Sunday",
+  "body": "Dear Residents, Please note that water supply will be interrupted...",
+  "isImportant": true
+}
+```
 
-Serve the Vite build from Express by:
-1. Building the frontend: `npm run build` in `frontend/`
-2. Copying `frontend/dist/` to `backend/public/`
-3. Adding `app.use(express.static('public'))` and catch-all in Express
-4. Deploy the entire repo as one Render service
+**Note:** If `isImportant` is true, emails are sent to all residents.
 
 ---
 
-## License
+### Cloudinary Integration
 
-MIT
+#### GET `/api/cloudinary-signature`
+Get signature for direct Cloudinary upload (client-side).
+
+**Response:**
+```json
+{
+  "signature": "abc123...",
+  "timestamp": 1704801234,
+  "cloudName": "your-cloud-name",
+  "apiKey": "123456789012345"
+}
+```
+
+## 🎨 Design System
+
+### Color Palette
+- **Accent:** Blue (#2563EB / #6366F1)
+- **Success:** Green (#10B981)
+- **Warning:** Amber (#F59E0B)
+- **Danger:** Red (#EF4444)
+- **Neutral:** Slate grays
+
+### Typography
+- **Font:** Inter (400, 500, 600, 700)
+- **Monospace:** JetBrains Mono (for complaint IDs)
+
+### Theme Support
+- Light mode (default)
+- Dark mode (toggle in sidebar)
+- Smooth transitions between themes
+- Persistent theme preference
+
+## 🔒 Security Features
+
+- **Authentication:** JWT tokens with configurable expiry
+- **Password Security:** bcrypt hashing with 10 salt rounds
+- **Authorization:** Role-based access control (RBAC)
+- **API Protection:** All routes require valid JWT except auth endpoints
+- **SQL Injection Prevention:** Prisma ORM with parameterized queries
+- **XSS Protection:** React's built-in escaping
+- **CORS:** Configurable for production deployment
+
+## 🚀 Deployment Guide
+
+### Deploy to Vercel (Recommended)
+
+1. **Push to GitHub**
+```bash
+git push origin main
+```
+
+2. **Import to Vercel**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "New Project"
+   - Import your GitHub repository
+   - Select `nextjs-app` as the root directory
+
+3. **Configure Environment Variables**
+   - Add all variables from `.env.local`
+   - Settings → Environment Variables
+   - Add for Production, Preview, and Development
+
+4. **Deploy**
+   - Click Deploy
+   - Wait for build to complete
+   - Get your live URL
+
+### Environment Variables on Vercel
+
+Add these in Vercel dashboard:
+- `DATABASE_URL` - Your Neon PostgreSQL URL
+- `DIRECT_URL` - Same as DATABASE_URL for Neon
+- `JWT_SECRET` - Your JWT secret
+- `JWT_EXPIRES_IN` - Token expiry (e.g., "7d")
+- `CLOUDINARY_CLOUD_NAME` - From Cloudinary
+- `CLOUDINARY_API_KEY` - From Cloudinary
+- `CLOUDINARY_API_SECRET` - From Cloudinary
+- `RESEND_API_KEY` - From Resend
+- `EMAIL_FROM` - Verified sender email
+- `OVERDUE_THRESHOLD_DAYS` - Default: 7
+
+## 📝 Seed Data
+
+Run `npm run seed` to populate with test data:
+
+**Users Created:**
+- Admin: admin@society.com / admin123
+- Residents (all use password: resident123):
+  - rajesh@example.com
+  - priya@example.com
+  - amit@example.com
+  - sneha@example.com
+  - vikram@example.com
+
+**Data Created:**
+- 12 complaints with realistic images
+- 6 society notices
+- Multiple status history entries
+- Mix of open, in-progress, and resolved complaints
+
+## 📱 Responsive Design
+
+Fully responsive across all devices:
+- **Desktop:** 1920px+ (full dashboard with charts)
+- **Laptop:** 1024px - 1919px
+- **Tablet:** 768px - 1023px
+- **Mobile:** < 768px (optimized mobile UI)
+
+## 🧪 Testing
+
+### Manual Testing
+1. Register as a new resident
+2. Raise a complaint with photo
+3. Login as admin (admin@society.com / admin123)
+4. View admin dashboard
+5. Update complaint status
+6. Check email notifications
+7. Post notice from admin
+8. View notice board
+
+### API Testing with curl
+
+```bash
+# Register
+curl -X POST http://localhost:3000/api/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test User","email":"test@example.com","password":"test123","apartmentNo":"A-101"}'
+
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"test@example.com","password":"test123"}'
+```
+
+## 📂 Project Structure
+
+```
+nextjs-app/
+├── app/
+│   ├── api/                    # API routes
+│   │   ├── auth/              # Authentication endpoints
+│   │   ├── complaints/        # Complaint endpoints
+│   │   ├── notices/           # Notice endpoints
+│   │   └── admin/             # Admin endpoints
+│   ├── (pages)/               # Next.js pages
+│   ├── globals.css            # Global styles
+│   └── layout.jsx             # Root layout
+├── components/                 # React components
+│   ├── ActivityFeed.jsx
+│   ├── DonutChart.jsx
+│   ├── MetricCard.jsx
+│   ├── TrendChart.jsx
+│   └── ...
+├── context/                    # React contexts
+│   ├── AuthContext.jsx
+│   └── ThemeContext.jsx
+├── lib/                        # Utilities
+│   ├── api.js                 # API client
+│   ├── auth.js                # Auth helpers
+│   ├── email.js               # Email service
+│   └── prisma.js              # Prisma client
+├── prisma/
+│   ├── schema.prisma          # Database schema
+│   ├── migrations/            # Database migrations
+│   └── seed.js                # Seed script
+├── views/                      # Page components
+│   ├── AdminDashboard.jsx
+│   ├── ResidentDashboard.jsx
+│   ├── NoticeBoard.jsx
+│   └── ...
+├── .env.local                  # Environment variables (not in repo)
+├── .env.example               # Example env file
+├── package.json
+└── next.config.mjs
+```
+
+## 🐛 Troubleshooting
+
+### Database Connection Issues
+- Check if Neon database is active (free tier sleeps after inactivity)
+- Verify DATABASE_URL is correct
+- Ensure SSL mode is included: `?sslmode=require`
+
+### Build Errors
+- Run `npm install` to ensure all dependencies are installed
+- Run `npx prisma generate` to regenerate Prisma client
+- Check Node.js version (requires 18+)
+
+### Email Not Sending
+- Verify RESEND_API_KEY is correct
+- Check EMAIL_FROM is verified in Resend
+- Use `onboarding@resend.dev` for testing
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+## 👨‍💻 Author
+
+**Mohd Ashhar Khan**
+- GitHub: [@coderashhar](https://github.com/coderashhar)
+- Email: Contact via GitHub
+
+---
+
+**Built with ❤️ using Next.js 16, Prisma, and PostgreSQL**
