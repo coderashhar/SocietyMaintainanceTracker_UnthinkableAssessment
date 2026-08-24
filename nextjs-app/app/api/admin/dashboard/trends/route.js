@@ -96,15 +96,12 @@ export async function GET(request) {
           some: {}
         }
       },
-      include: {
+      select: {
+        createdAt: true,
         history: {
           orderBy: { changedAt: 'asc' },
           take: 1
         }
-      },
-      select: {
-        createdAt: true,
-        history: true
       }
     });
 
