@@ -504,7 +504,7 @@ git push origin main
    - Go to [vercel.com](https://vercel.com)
    - Click "New Project"
    - Import your GitHub repository
-   - Select `nextjs-app` as the root directory
+   - Select `./` as the root directory
 
 3. **Configure Environment Variables**
    - Add all variables from `.env.local`
