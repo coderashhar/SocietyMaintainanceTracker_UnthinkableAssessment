@@ -29,7 +29,7 @@ export default function ResidentDashboard() {
           <h1 className="page-title">My Complaints</h1>
           <p className="page-subtitle">Apt {user?.apartmentNo} · Resident Portal</p>
         </div>
-        <Link to="/complaints/new" className="btn btn-primary">
+        <Link href="/complaints/new" className="btn btn-primary">
           + Raise Complaint
         </Link>
       </div>
@@ -70,7 +70,7 @@ export default function ResidentDashboard() {
           <span className="empty-icon">📋</span>
           <h3>No complaints yet</h3>
           <p>Everything is in order! Raise a complaint if you notice any issue.</p>
-          <Link to="/complaints/new" className="btn btn-primary" style={{ marginTop: '16px', display: 'inline-flex' }}>
+          <Link href="/complaints/new" className="btn btn-primary" style={{ marginTop: '16px', display: 'inline-flex' }}>
             Raise your first complaint
           </Link>
         </div>

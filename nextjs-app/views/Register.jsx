@@ -183,7 +183,7 @@ export default function Register() {
 
           <div className="auth-form-footer">
             Already registered?{' '}
-            <Link to="/login">Sign in</Link>
+            <Link href="/login">Sign in</Link>
           </div>
         </div>
       </div>

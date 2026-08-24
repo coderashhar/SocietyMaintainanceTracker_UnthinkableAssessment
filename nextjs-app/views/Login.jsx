@@ -105,7 +105,7 @@ export default function Login() {
 
           <div className="auth-form-footer">
             New resident?{' '}
-            <Link to="/register">Create an account</Link>
+            <Link href="/register">Create an account</Link>
           </div>
         </div>
       </div>
