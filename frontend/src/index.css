@@ -68,7 +68,10 @@
   padding: 0;
 }
 
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  height: 100%;
+}
 
 body {
   font-family: var(--font-body);
@@ -77,6 +80,7 @@ body {
   font-size: 15px;
   line-height: 1.6;
   min-height: 100vh;
+  height: 100%;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -109,7 +113,8 @@ input, textarea, select { font-family: inherit; }
 /* Full-page two-column split */
 .auth-split-page {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;          /* exactly one viewport height — no scroll */
+  overflow: hidden;
   background: #fff;
 }
 
@@ -172,7 +177,7 @@ input, textarea, select { font-family: inherit; }
   justify-content: center;
   background: #ffffff;
   padding: 48px;
-  overflow-y: auto;
+  overflow-y: auto;       /* only this column scrolls if form is taller than viewport */
 }
 
 .auth-form-inner {
