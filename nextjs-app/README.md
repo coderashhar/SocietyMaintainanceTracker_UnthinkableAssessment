@@ -4,7 +4,7 @@ A comprehensive web application for managing society maintenance complaints, not
 
 ## 🚀 Live Demo
 
-**Hosted Application:** [Your Vercel URL will be here]
+**Hosted Application:** [https://society-maintainance-tracker-unthin.vercel.app](https://society-maintainance-tracker-unthin.vercel.app)
 
 **Test Credentials:**
 - **Admin:** admin@society.com / admin123

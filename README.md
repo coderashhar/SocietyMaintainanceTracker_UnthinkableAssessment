@@ -1,6 +1,14 @@
 # Society Maintenance Tracker
 
-A full-stack, role-based apartment complaint management platform built with Node.js/Express, PostgreSQL (Prisma), and React/Vite.
+A comprehensive web application for managing society maintenance complaints, notices, and resident communications. Built with Next.js 16, Prisma ORM, and PostgreSQL.
+
+## 🚀 Live Demo
+
+**Hosted Application:** [https://society-maintainance-tracker-unthin.vercel.app](https://society-maintainance-tracker-unthin.vercel.app)
+
+**Test Credentials:**
+- **Admin:** admin@society.com / admin123
+- **Resident:** rajesh@example.com / resident123
 
 ---
 
