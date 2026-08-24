@@ -3,6 +3,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import Navbar from './components/Navbar.jsx';
+import SplashScreen from './components/SplashScreen.jsx';
 
 // Pages
 import Login              from './pages/Login.jsx';
@@ -18,7 +19,9 @@ import NoticeBoard        from './pages/NoticeBoard.jsx';
  * Inner router — rendered inside AuthProvider so it can access useAuth()
  */
 function AppRoutes() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  if (loading) return <SplashScreen />;
 
   return (
     <BrowserRouter>
