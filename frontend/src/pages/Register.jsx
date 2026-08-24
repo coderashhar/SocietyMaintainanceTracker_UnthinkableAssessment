@@ -139,7 +139,7 @@ export default function Register() {
                   onClick={() => setShowPassword(v => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? '🙈' : '👁'}
+                  {showPassword ? 'Hide' : 'Show'}
                 </button>
               </div>
               <span className="form-hint">Minimum 8 characters</span>
@@ -165,7 +165,7 @@ export default function Register() {
                   onClick={() => setShowConfirm(v => !v)}
                   aria-label={showConfirm ? 'Hide password' : 'Show password'}
                 >
-                  {showConfirm ? '🙈' : '👁'}
+                  {showConfirm ? 'Hide' : 'Show'}
                 </button>
               </div>
             </div>

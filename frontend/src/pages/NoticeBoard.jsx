@@ -129,7 +129,7 @@ export default function NoticeBoard() {
 
       {!loading && !error && notices.length === 0 && (
         <div className="empty-state">
-          <span className="empty-icon">📭</span>
+          <div className="empty-icon" style={{ fontSize: '32px', fontWeight: '300', color: 'var(--text-faint)' }}>—</div>
           <h3>No notices yet</h3>
           {isAdmin && <p>Post the first notice using the button above.</p>}
         </div>
