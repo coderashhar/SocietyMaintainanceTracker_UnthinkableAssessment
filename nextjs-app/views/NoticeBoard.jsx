@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { noticesApi } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
-import NoticeCard from '@/components/NoticeCard.jsx';
 
 export default function NoticeBoard() {
   const { user }  = useAuth();
@@ -47,8 +46,17 @@ export default function NoticeBoard() {
     }
   };
 
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
   return (
-    <div style={{ maxWidth: '720px' }}>
+    <div style={{ maxWidth: '900px' }}>
       <div className="page-header">
         <div>
           <h1 className="page-title">Notice Board</h1>
@@ -136,11 +144,36 @@ export default function NoticeBoard() {
         </div>
       )}
 
-      <div className="notice-list">
-        {notices.map(notice => (
-          <NoticeCard key={notice.id} notice={notice} />
-        ))}
-      </div>
+      {/* Notice Board - Cork board aesthetic */}
+      {!loading && !error && notices.length > 0 && (
+        <div className="notice-board">
+          {notices.map((notice, index) => (
+            <article
+              key={notice.id}
+              className={`notice-board-card${notice.isImportant ? ' important' : ''}`}
+              style={{ '--notice-index': index }}
+            >
+              {/* Pin at top */}
+              <div className="notice-pin" data-important={notice.isImportant} />
+
+              {/* Notice content */}
+              <div className="notice-board-header">
+                {notice.isImportant && (
+                  <span className="notice-important-badge">Important</span>
+                )}
+                <h3 className="notice-board-title">{notice.title}</h3>
+              </div>
+
+              <p className="notice-board-body">{notice.body}</p>
+
+              <div className="notice-board-footer">
+                <div className="notice-date-stamp">{formatDate(notice.createdAt)}</div>
+                <div className="notice-author">— {notice.author?.name || 'Admin'}</div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

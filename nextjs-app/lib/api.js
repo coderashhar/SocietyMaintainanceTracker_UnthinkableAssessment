@@ -40,6 +40,8 @@ export const complaintsApi = {
 
 export const dashboardApi = {
   get: () => api.get('/admin/dashboard'),
+  getTrends: () => api.get('/admin/dashboard/trends'),
+  getActivity: () => api.get('/admin/dashboard/activity'),
 };
 
 export const noticesApi = {
