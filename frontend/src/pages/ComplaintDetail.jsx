@@ -10,32 +10,29 @@ const STATUSES   = ['Open', 'InProgress', 'Resolved'];
 const PRIORITIES = ['Low', 'Medium', 'High'];
 
 export default function ComplaintDetail() {
-  const { id }       = useParams();
-  const { user }     = useAuth();
-  const navigate     = useNavigate();
-  const isAdmin      = user?.role === 'admin';
+  const { id }    = useParams();
+  const { user }  = useAuth();
+  const navigate  = useNavigate();
+  const isAdmin   = user?.role === 'admin';
 
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
 
-  // Admin action state
   const [newStatus,   setNewStatus]   = useState('');
   const [statusNote,  setStatusNote]  = useState('');
   const [newPriority, setNewPriority] = useState('');
-  const [updating, setUpdating]       = useState(false);
-  const [actionMsg, setActionMsg]     = useState('');
-  const [actionErr, setActionErr]     = useState('');
+  const [updating,    setUpdating]    = useState(false);
+  const [actionMsg,   setActionMsg]   = useState('');
+  const [actionErr,   setActionErr]   = useState('');
 
   const fetchComplaint = () => {
-    const fn = isAdmin
-      ? complaintsApi.getById(id)
-      : complaintsApi.getById(id);
-    fn.then(({ data }) => {
-      setComplaint(data);
-      setNewStatus(data.status);
-      setNewPriority(data.priority);
-    })
+    complaintsApi.getById(id)
+      .then(({ data }) => {
+        setComplaint(data);
+        setNewStatus(data.status);
+        setNewPriority(data.priority);
+      })
       .catch(() => setError('Complaint not found or access denied'))
       .finally(() => setLoading(false));
   };
@@ -88,66 +85,89 @@ export default function ComplaintDetail() {
 
   return (
     <div style={{ maxWidth: '800px' }}>
-      <button className="btn btn-ghost btn-sm" onClick={() => navigate(backUrl)} style={{ marginBottom: '16px' }}>
-        ← Back
+      {/* Back link */}
+      <button className="back-link" onClick={() => navigate(backUrl)}>
+        ← {isAdmin ? 'Back to All Complaints' : 'Back to My Complaints'}
       </button>
 
+      {/* Header */}
       <div className="page-header">
         <div>
           <h1 className="page-title">{complaint.category} Complaint</h1>
-          <p className="page-subtitle">#{complaint.id.slice(-8).toUpperCase()}</p>
+          <span className="complaint-id">#{complaint.id.slice(-8).toUpperCase()}</span>
         </div>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {complaint.isOverdue && <span className="badge badge-overdue">⚠ Overdue</span>}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {complaint.isOverdue && <span className="badge badge-overdue">Overdue</span>}
           <StatusBadge status={complaint.status} />
           <PriorityBadge priority={complaint.priority} />
         </div>
       </div>
 
-      {/* Details */}
+      {/* Detail card */}
       <div className="card" style={{ marginBottom: '20px' }}>
         <div className="detail-grid">
-          <div className="detail-field">
-            <label>Resident</label>
-            <p>{complaint.resident?.name} (Apt {complaint.resident?.apartmentNo})</p>
+          <div>
+            <div className="detail-field-label">Resident</div>
+            <div className="detail-field-value">
+              {complaint.resident?.name}
+            </div>
           </div>
-          <div className="detail-field">
-            <label>Category</label>
-            <p>{complaint.category}</p>
+          <div>
+            <div className="detail-field-label">Apartment</div>
+            <div className="detail-field-value">{complaint.resident?.apartmentNo}</div>
           </div>
-          <div className="detail-field">
-            <label>Created</label>
-            <p>{createdDate}</p>
+          <div>
+            <div className="detail-field-label">Category</div>
+            <div className="detail-field-value">{complaint.category}</div>
           </div>
-          <div className="detail-field">
-            <label>Resolved</label>
-            <p>{resolvedDate || '—'}</p>
+          <div>
+            <div className="detail-field-label">Priority</div>
+            <div className="detail-field-value"><PriorityBadge priority={complaint.priority} /></div>
+          </div>
+          <div>
+            <div className="detail-field-label">Created</div>
+            <div className="detail-field-value">{createdDate}</div>
+          </div>
+          <div>
+            <div className="detail-field-label">Resolved</div>
+            <div className="detail-field-value">{resolvedDate || '—'}</div>
           </div>
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
-          <div className="detail-field">
-            <label>Description</label>
-            <p style={{ whiteSpace: 'pre-wrap', lineHeight: '1.7' }}>{complaint.description}</p>
-          </div>
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: '16px', marginTop: '4px' }}>
+          <div className="detail-field-label" style={{ marginBottom: '6px' }}>Description</div>
+          <p className="detail-description">{complaint.description}</p>
         </div>
 
         {complaint.photoUrl && (
-          <img src={complaint.photoUrl} alt="Complaint photo" className="complaint-photo" />
+          <div style={{ marginTop: '16px' }}>
+            <div className="detail-field-label" style={{ marginBottom: '6px' }}>Photo</div>
+            <img src={complaint.photoUrl} alt="Complaint photo" className="complaint-photo" />
+          </div>
         )}
       </div>
 
+      {/* Resolved — locked banner */}
+      {isAdmin && complaint.status === 'Resolved' && (
+        <div className="locked-banner">
+          <span className="locked-banner-icon">🔒</span>
+          <div>
+            This complaint is <strong>Resolved</strong> and locked. No further status changes are permitted. This is a closed record.
+          </div>
+        </div>
+      )}
+
       {/* Admin action panel */}
       {isAdmin && complaint.status !== 'Resolved' && (
-        <div className="card" style={{ marginBottom: '20px' }}>
-          <h2 className="card-title" style={{ marginBottom: '16px' }}>🛠 Admin Actions</h2>
+        <div className="action-panel">
+          <div className="action-panel-title">Admin Actions</div>
 
           {actionMsg && <div className="alert alert-success">{actionMsg}</div>}
           {actionErr && <div className="alert alert-error">{actionErr}</div>}
 
-          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
-            {/* Priority update */}
-            <div style={{ flex: '1', minWidth: '180px' }}>
+          <div className="action-panel-grid">
+            {/* Priority */}
+            <div>
               <div className="form-group">
                 <label className="form-label" htmlFor="admin-priority">Set Priority</label>
                 <select
@@ -169,8 +189,8 @@ export default function ComplaintDetail() {
               </button>
             </div>
 
-            {/* Status update */}
-            <form onSubmit={handleStatusUpdate} style={{ flex: '2', minWidth: '280px' }}>
+            {/* Status */}
+            <form onSubmit={handleStatusUpdate}>
               <div className="form-group">
                 <label className="form-label" htmlFor="admin-status">Update Status</label>
                 <select
@@ -179,7 +199,9 @@ export default function ComplaintDetail() {
                   value={newStatus}
                   onChange={(e) => setNewStatus(e.target.value)}
                 >
-                  {STATUSES.map(s => <option key={s} value={s}>{s === 'InProgress' ? 'In Progress' : s}</option>)}
+                  {STATUSES.map(s => (
+                    <option key={s} value={s}>{s === 'InProgress' ? 'In Progress' : s}</option>
+                  ))}
                 </select>
               </div>
               <div className="form-group">
@@ -203,18 +225,16 @@ export default function ComplaintDetail() {
               </button>
             </form>
           </div>
+
+          <div className="action-note">
+            Updating status will notify the resident by email.
+          </div>
         </div>
       )}
 
-      {isAdmin && complaint.status === 'Resolved' && (
-        <div className="alert alert-info" style={{ marginBottom: '20px' }}>
-          🔒 This complaint is <strong>Resolved</strong> and locked. No further status changes are allowed.
-        </div>
-      )}
-
-      {/* Status Timeline */}
+      {/* Status History */}
       <div className="card">
-        <h2 className="card-title" style={{ marginBottom: '20px' }}>🕐 Status History</h2>
+        <h2 className="card-title" style={{ marginBottom: '20px' }}>Status History</h2>
         <StatusTimeline history={complaint.history || []} />
       </div>
     </div>

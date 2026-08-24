@@ -54,7 +54,7 @@ export default function AdminComplaints() {
 
       {overdueCount > 0 && (
         <div className="overdue-banner">
-          ⚠ <strong>{overdueCount}</strong> overdue complaint(s) pinned to top
+          <strong>{overdueCount}</strong> overdue complaint(s) are pinned to the top of this list.
         </div>
       )}
 
@@ -114,7 +114,7 @@ export default function AdminComplaints() {
           />
         </div>
 
-        <button className="btn btn-ghost btn-sm" onClick={handleReset} style={{ marginBottom: '0' }}>
+        <button className="btn btn-ghost btn-sm" onClick={handleReset} style={{ alignSelf: 'flex-end', marginBottom: '14px' }}>
           Reset
         </button>
       </div>
@@ -133,7 +133,7 @@ export default function AdminComplaints() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="complaint-list">
         {complaints.map(c => (
           <ComplaintCard key={c.id} complaint={c} showResident={true} />
         ))}

@@ -4,7 +4,7 @@
 export default function PriorityBadge({ priority }) {
   const classMap = {
     Low:    'badge badge-low',
-    Medium: 'badge badge-medium',
+    Medium: 'badge badge-med',
     High:   'badge badge-high',
   };
   const iconMap = { Low: '▽', Medium: '◇', High: '▲' };

@@ -3,7 +3,7 @@ import StatusBadge from './StatusBadge.jsx';
 import PriorityBadge from './PriorityBadge.jsx';
 
 /**
- * Reusable complaint card for the resident dashboard and admin list.
+ * Reusable complaint card — resident dashboard and admin list.
  */
 export default function ComplaintCard({ complaint, showResident = false }) {
   const navigate = useNavigate();
@@ -26,33 +26,30 @@ export default function ComplaintCard({ complaint, showResident = false }) {
       onKeyDown={(e) => e.key === 'Enter' && handleClick()}
       aria-label={`Complaint: ${complaint.category}`}
     >
-      <div className="complaint-card-header">
-        <div>
-          <div className="complaint-category">{complaint.category}</div>
+      <div className="complaint-card-top">
+        <div style={{ minWidth: 0 }}>
+          <div className="complaint-card-category">{complaint.category}</div>
           {showResident && complaint.resident && (
-            <div className="complaint-meta">
+            <div style={{ fontSize: '12px', color: 'var(--text-faint)', marginTop: '2px' }}>
               {complaint.resident.name} · Apt {complaint.resident.apartmentNo}
             </div>
           )}
         </div>
-        <div style={{ display: 'flex', gap: '6px', flexShrink: 0, flexWrap: 'wrap' }}>
+        <div className="complaint-card-badges">
           {complaint.isOverdue && (
-            <span className="badge badge-overdue">⚠ Overdue</span>
+            <span className="badge badge-overdue">Overdue</span>
           )}
           <StatusBadge status={complaint.status} />
+          <PriorityBadge priority={complaint.priority} />
         </div>
       </div>
 
-      <p className="complaint-desc">{complaint.description}</p>
+      <p className="complaint-card-desc">{complaint.description}</p>
 
-      <div className="complaint-footer">
-        <PriorityBadge priority={complaint.priority} />
-        <span style={{ color: 'var(--color-text-faint)', fontSize: '12px' }}>
-          #{complaint.id.slice(-6).toUpperCase()} · {createdDate}
-        </span>
-        {complaint.photoUrl && (
-          <span style={{ fontSize: '12px', color: 'var(--color-text-muted)' }}>📷 Photo</span>
-        )}
+      <div className="complaint-card-footer">
+        <span className="complaint-id">#{complaint.id.slice(-8).toUpperCase()}</span>
+        <span>{createdDate}</span>
+        {complaint.photoUrl && <span>Photo attached</span>}
       </div>
     </div>
   );

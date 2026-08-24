@@ -4,19 +4,18 @@ import { useAuth } from '../context/AuthContext.jsx';
 import NoticeCard from '../components/NoticeCard.jsx';
 
 export default function NoticeBoard() {
-  const { user }        = useAuth();
-  const isAdmin         = user?.role === 'admin';
+  const { user }  = useAuth();
+  const isAdmin   = user?.role === 'admin';
 
-  const [notices, setNotices]   = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [error, setError]       = useState('');
+  const [notices, setNotices]     = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
 
-  // Create form state (admin only)
-  const [showForm, setShowForm] = useState(false);
-  const [form, setForm]         = useState({ title: '', body: '', isImportant: false });
-  const [creating, setCreating] = useState(false);
+  const [showForm, setShowForm]   = useState(false);
+  const [form, setForm]           = useState({ title: '', body: '', isImportant: false });
+  const [creating, setCreating]   = useState(false);
   const [createErr, setCreateErr] = useState('');
-  const [createOk, setCreateOk]  = useState('');
+  const [createOk, setCreateOk]   = useState('');
 
   const fetchNotices = () => {
     noticesApi.list()
@@ -51,7 +50,7 @@ export default function NoticeBoard() {
     <div style={{ maxWidth: '720px' }}>
       <div className="page-header">
         <div>
-          <h1 className="page-title">📢 Notice Board</h1>
+          <h1 className="page-title">Notice Board</h1>
           <p className="page-subtitle">Society announcements and updates</p>
         </div>
         {isAdmin && (
@@ -60,7 +59,7 @@ export default function NoticeBoard() {
             onClick={() => setShowForm(v => !v)}
             id="toggle-notice-form-btn"
           >
-            {showForm ? '✕ Cancel' : '+ Post Notice'}
+            {showForm ? 'Cancel' : '+ Post Notice'}
           </button>
         )}
       </div>
@@ -74,7 +73,7 @@ export default function NoticeBoard() {
           {createErr && <div className="alert alert-error">{createErr}</div>}
           <form onSubmit={handleCreateSubmit} noValidate>
             <div className="form-group">
-              <label className="form-label" htmlFor="notice-title">Title *</label>
+              <label className="form-label" htmlFor="notice-title">Title</label>
               <input
                 id="notice-title"
                 className="form-control"
@@ -86,7 +85,7 @@ export default function NoticeBoard() {
               />
             </div>
             <div className="form-group">
-              <label className="form-label" htmlFor="notice-body">Body *</label>
+              <label className="form-label" htmlFor="notice-body">Body</label>
               <textarea
                 id="notice-body"
                 className="form-control"
@@ -103,13 +102,11 @@ export default function NoticeBoard() {
                 type="checkbox"
                 checked={form.isImportant}
                 onChange={e => setForm({ ...form, isImportant: e.target.checked })}
-                style={{ width: '16px', height: '16px', accentColor: 'var(--color-danger)', cursor: 'pointer' }}
+                style={{ width: '16px', height: '16px', accentColor: '#EF4444', cursor: 'pointer' }}
               />
-              <label htmlFor="notice-important" style={{ fontSize: '14px', color: 'var(--color-text)', cursor: 'pointer' }}>
+              <label htmlFor="notice-important" style={{ fontSize: '14px', color: 'var(--text)', cursor: 'pointer' }}>
                 Mark as Important{' '}
-                <span style={{ color: 'var(--color-text-muted)', fontSize: '13px' }}>
-                  (emails all residents)
-                </span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>(sends email to all residents)</span>
               </label>
             </div>
             <button
@@ -118,7 +115,7 @@ export default function NoticeBoard() {
               disabled={creating}
               id="post-notice-btn"
             >
-              {creating ? 'Posting…' : '📢 Post Notice'}
+              {creating ? 'Posting…' : 'Post Notice'}
             </button>
           </form>
         </div>
@@ -138,10 +135,11 @@ export default function NoticeBoard() {
         </div>
       )}
 
-      {/* Notices sorted: important first, then by date (backend-enforced order) */}
-      {notices.map(notice => (
-        <NoticeCard key={notice.id} notice={notice} />
-      ))}
+      <div className="notice-list">
+        {notices.map(notice => (
+          <NoticeCard key={notice.id} notice={notice} />
+        ))}
+      </div>
     </div>
   );
 }

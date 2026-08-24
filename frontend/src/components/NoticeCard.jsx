@@ -1,5 +1,5 @@
 /**
- * Renders a single notice card. Important notices get a red-tinted style.
+ * Single notice card — important notices get a red left border.
  */
 export default function NoticeCard({ notice }) {
   const date = new Date(notice.createdAt).toLocaleDateString('en-IN', {
@@ -8,13 +8,15 @@ export default function NoticeCard({ notice }) {
 
   return (
     <article className={`notice-card${notice.isImportant ? ' important' : ''}`}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
-        {notice.isImportant && <span className="badge badge-important">📌 Important</span>}
-        {!notice.isImportant && <span className="badge badge-notice">📋 Notice</span>}
+      <div className="notice-card-badge-row">
+        {notice.isImportant
+          ? <span className="badge badge-overdue">Important</span>
+          : <span className="badge badge-open">Notice</span>
+        }
       </div>
       <h2 className="notice-card-title">{notice.title}</h2>
       <p className="notice-card-body">{notice.body}</p>
-      <div className="notice-card-meta">
+      <div className="notice-card-footer">
         <span>Posted by {notice.author?.name || 'Admin'}</span>
         <span>·</span>
         <time dateTime={notice.createdAt}>{date}</time>

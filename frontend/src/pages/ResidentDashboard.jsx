@@ -25,40 +25,36 @@ export default function ResidentDashboard() {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-title">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
+          <h1 className="page-title">My Complaints</h1>
           <p className="page-subtitle">Apt {user?.apartmentNo} · Resident Portal</p>
         </div>
         <Link to="/complaints/new" className="btn btn-primary">
-          ➕ Raise Complaint
+          + Raise Complaint
         </Link>
       </div>
 
-      {/* Quick stats */}
+      {/* Stat cards */}
       <div className="stat-grid">
-        <div className="stat-card info">
-          <span className="stat-icon">📋</span>
+        <div className="stat-card total">
           <div className="stat-value">{complaints.length}</div>
-          <div className="stat-label">Total Complaints</div>
+          <div className="stat-label">Total</div>
         </div>
-        <div className="stat-card accent">
-          <span className="stat-icon">🔵</span>
+        <div className="stat-card open">
           <div className="stat-value">{open}</div>
           <div className="stat-label">Open</div>
         </div>
-        <div className="stat-card warning">
-          <span className="stat-icon">🔄</span>
+        <div className="stat-card inprogress">
           <div className="stat-value">{inProgress}</div>
           <div className="stat-label">In Progress</div>
         </div>
-        <div className="stat-card success">
-          <span className="stat-icon">✅</span>
+        <div className="stat-card resolved">
           <div className="stat-value">{resolved}</div>
           <div className="stat-label">Resolved</div>
         </div>
       </div>
 
       {/* Complaint list */}
-      <div className="section-title">📋 My Complaints</div>
+      <div className="section-label">Complaints</div>
 
       {loading && (
         <div className="loading-center">
@@ -70,7 +66,7 @@ export default function ResidentDashboard() {
 
       {!loading && !error && complaints.length === 0 && (
         <div className="empty-state">
-          <span className="empty-icon">🏠</span>
+          <span className="empty-icon">📋</span>
           <h3>No complaints yet</h3>
           <p>Everything is in order! Raise a complaint if you notice any issue.</p>
           <Link to="/complaints/new" className="btn btn-primary" style={{ marginTop: '16px', display: 'inline-flex' }}>
@@ -79,7 +75,7 @@ export default function ResidentDashboard() {
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="complaint-list">
         {complaints.map(c => (
           <ComplaintCard key={c.id} complaint={c} showResident={false} />
         ))}
