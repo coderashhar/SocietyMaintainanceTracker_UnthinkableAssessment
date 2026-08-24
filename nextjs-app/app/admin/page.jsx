@@ -1,4 +1,5 @@
 'use client';
 export const dynamic = 'force-dynamic';
-import AdminDashboard from '@/views/AdminDashboard';
+import noSSR from 'next/dynamic';
+const AdminDashboard = noSSR(() => import('@/views/AdminDashboard'), { ssr: false });
 export default function Page() { return <AdminDashboard />; }
